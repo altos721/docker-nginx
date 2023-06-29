@@ -1,7 +1,10 @@
 version: '3.8'
 services:
   server:
-    image: 'nginx:stable-alpine'
+    # image: 'nginx:stable-alpine'
+    build:
+      context: .
+      dockerfile: dockerfiles/nginx.dockerfile
     ports:
       - '8000:80'
     volumes:
@@ -12,13 +15,15 @@ services:
       - mysql
   php:
     build:
-      context: ./dockerfiles
-      dockerfile: php.dockerfile
+      context: .
+      dockerfile: dockerfiles/php.dockerfile
     volumes:
       - ./src:/var/www/html:delegated
   mysql:
     platform: linux/x86_64
     image: mysql:5.7
+    ports:
+      - '3306:3306'
     env_file:
       - ./env/mysql.env
   composer:
@@ -27,7 +32,17 @@ services:
       dockerfile: composer.dockerfile
     volumes:
       - ./src:/var/www/html
+  artisan:
+    build:
+      context: .
+      dockerfile: dockerfiles/php.dockerfile
+    volumes:
+      - ./src:/var/www/html
+    entrypoint: ['php', '/var/www/html/artisan']
 
-  # artisan:
-
-  # npm:
+  npm:
+    image: node:14
+    working_dir: /var/www/html
+    entrypoint: ['npm']
+    volumes:
+      - ./src:/var/www/html
